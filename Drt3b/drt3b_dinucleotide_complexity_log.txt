@@ -1,0 +1,24 @@
+=== Drt3b Mutation: Dinucleotide Frequencies (average over 50 trials) ===
+
+wildtype    : AC=0.502, CA=0.498
+E26A        : AC=0.432, CA=0.429, AA=0.073, CC=0.066
+R253A       : AC=0.431, CA=0.429, AA=0.071, CC=0.069
+E26A_R253A  : AC=0.306, CA=0.304, CC=0.200, AA=0.189
+random      : CC=0.067, CG=0.066, AT=0.065, TA=0.064, TC=0.064, TT=0.063
+
+=== Sequence Complexity (average over 50 trials) ===
+
+Mutation     | Shannon Entropy (bits) | LZ Complexity (norm)
+------------------------------------------------------------
+wildtype     | 1.0000                 | 0.9052              
+E26A         | 0.9992                 | 1.2853              
+R253A        | 0.9995                 | 1.2886              
+E26A_R253A   | 0.9985                 | 1.7451              
+random       | 1.9936                 | 2.6294              
+
+--- Interpretation ---
+Wildtype: entropy ~ 1.0 bit (only A/C, perfect alternation gives some structure, so entropy may be slightly less than 1 due to constraints?) Actually perfect alternating AChas entropy 1.0 bit per symbol (equal probability of A and C, no correlation). LZ complexity < 1 indicates redundancy.
+E26A/R253A: entropy still near 1.0 but LZ may increase due to occasional repeats.
+E26A_R253A: entropy near 1.0, LZ higher, approaching random A/C.
+Random: entropy near 2.0 bits (four symbols), LZ near 1.0 (fully random).
+[Finished in 3.4s]

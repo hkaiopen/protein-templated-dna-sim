@@ -1,0 +1,22 @@
+=== Drt3b Noise Robustness Experiment ===
+Measuring error rate (non‑alternating adjacent pairs) as a function of noise.
+
+--- Effect of Temperature (T) ---
+T =  0.1 : mean error rate = 0.0000 ± 0.0000
+T =  0.5 : mean error rate = 0.0000 ± 0.0000
+T =  1.0 : mean error rate = 0.0000 ± 0.0000
+T =  2.0 : mean error rate = 0.0000 ± 0.0000
+T =  5.0 : mean error rate = 0.0000 ± 0.0000
+T = 10.0 : mean error rate = 0.0000 ± 0.0000
+
+--- Effect of Concentration Ratio (bias for mismatched nucleotide) ---
+Conc ratio =  0.5 : mean error rate = 0.0000 ± 0.0000
+Conc ratio =  1.0 : mean error rate = 0.0000 ± 0.0000
+Conc ratio =  2.0 : mean error rate = 0.0000 ± 0.0000
+Conc ratio =  5.0 : mean error rate = 0.0000 ± 0.0000
+Conc ratio = 10.0 : mean error rate = 0.0000 ± 0.0000
+
+--- Extreme noise (T=10, conc_ratio=10) ---
+Error rate = 0.4422
+Sequence preview: CCACAACCCCCCACAAACACACCCACACACACAAAACAAACCACCCAAACACACACAACCACACACAACAAAAAACACAC...
+[Finished in 2.8s]
