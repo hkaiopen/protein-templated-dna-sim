@@ -1,24 +1,71 @@
-=== Drt3b Mutation: Dinucleotide Frequencies (average over 50 trials) ===
+==================================================================================
+dinucleotide_complexity.py — Drt3b information-dynamics model
+50 seeds × 500 bp | empirical SEs (Reviewer 1, P1)
+==================================================================================
 
-wildtype    : AC=0.502, CA=0.498
-E26A        : AC=0.432, CA=0.429, AA=0.073, CC=0.066
-R253A       : AC=0.431, CA=0.429, AA=0.071, CC=0.069
-E26A_R253A  : AC=0.306, CA=0.304, CC=0.200, AA=0.189
-random      : CC=0.067, CG=0.066, AT=0.065, TA=0.064, TC=0.064, TT=0.063
+[Part 1] A/C-only sub-model (G, T excluded; E = ∞)
+         Metric ε = fraction of adjacent identical bases
+         LZ = LZ76 phrases / (n / log2 n)
+----------------------------------------------------------------------------------
+Mutant                                ε        H1        H2   H(X2|X1)     f_AC6       LZ
+----------------------------------------------------------------------------------
+Wild-type (Δ=100)                0.0000    1.0000    1.0000    -0.0000    1.0000   0.1793
+E26A (Δ=2.5)                     0.1406    0.9996    1.5814     0.5818    0.6202   0.5247
+R253A (Δ=2.5, pred.)             0.1406    0.9996    1.5814     0.5818    0.6202   0.5247
+E26A_R253A (Δ=1.0, pred.)        0.3956    0.9988    1.9625     0.9637    0.1495   1.0174
+Random (Δ=0, A/C-only)           0.5017    0.9984    1.9956     0.9971    0.0313   1.1082
 
-=== Sequence Complexity (average over 50 trials) ===
+  Analytic cross-check: ε(Δ) = 2 e^(−Δ) / (1 + e^(−Δ))^2
+  Mutant                            Δ   ε analytic    ε simulated         Δε
+  Wild-type (Δ=100)            100.00       0.0000         0.0000    -0.0000
+  E26A (Δ=2.5)                   2.50       0.1402         0.1406    +0.0004
+  R253A (Δ=2.5, pred.)           2.50       0.1402         0.1406    +0.0004
+  E26A_R253A (Δ=1.0, pred.)      1.00       0.3932         0.3956    +0.0024
+  Random (Δ=0, A/C-only)         0.00       0.5000         0.5017    +0.0017
 
-Mutation     | Shannon Entropy (bits) | LZ Complexity (norm)
-------------------------------------------------------------
-wildtype     | 1.0000                 | 0.9052              
-E26A         | 0.9992                 | 1.2853              
-R253A        | 0.9995                 | 1.2886              
-E26A_R253A   | 0.9985                 | 1.7451              
-random       | 1.9936                 | 2.6294              
+  (AC)6 mapping self-consistency (Reviewer 1, P3):
+  Forward: f_AC6 = q^6 + p^6   (both phases, exact)
+  Inverse: p from bisection;  ε = 2 p (1 − p)
+  Mutant                              p   f_AC6 analytic   f_AC6 simulated    ε from f_AC6
+  Wild-type (Δ=100)              0.0000           1.0000            1.0000          0.0000
+  E26A (Δ=2.5)                   0.0759           0.6229            0.6202          0.1413
+  R253A (Δ=2.5, pred.)           0.0759           0.6229            0.6202          0.1413
+  E26A_R253A (Δ=1.0, pred.)      0.2689           0.1530            0.1495          0.3959
+  Random (Δ=0, A/C-only)         0.5000           0.0312            0.0313          0.5000
 
---- Interpretation ---
-Wildtype: entropy ~ 1.0 bit (only A/C, perfect alternation gives some structure, so entropy may be slightly less than 1 due to constraints?) Actually perfect alternating AChas entropy 1.0 bit per symbol (equal probability of A and C, no correlation). LZ complexity < 1 indicates redundancy.
-E26A/R253A: entropy still near 1.0 but LZ may increase due to occasional repeats.
-E26A_R253A: entropy near 1.0, LZ higher, approaching random A/C.
-Random: entropy near 2.0 bits (four symbols), LZ near 1.0 (fully random).
-[Finished in 3.4s]
+[Part 2] G/T-extended model — G allowed only in S_A; T excluded
+         Δ_G,A = ln[(1 − p_G)/p_G] = 1.3863 kT  (p_G = 0.20)
+----------------------------------------------------------------------------------
+Mutant                             f_G    dG frac        H1        H2   H(X2|X1)
+E26A (Δ_G,A calib.)             0.1000     0.1000    1.3600    1.7202     0.3602
+E26Q (Δ_G,A calib.)             0.1000     0.1000    1.3600    1.7202     0.3602
+         Note: state alternation is deterministic in this layer, so the
+         adjacent-identical metric ε is identically zero and uninformative.
+
+[Part 3] 3-state AAC model — VERIFICATION of Reviewer 1, P5
+----------------------------------------------------------------------------------
+  Deterministic poly(AAC) repeat, length = 500 bp, 50 replicas
+    Marginal entropy  H1        = 0.9185 bit   [corrected value: 0.918 bit]
+    Dinucleotide       H2        = 1.5850 bit   [theory: log2(3) = 1.585 bit]
+    Entropy rate       H(X2|X1)  = 0.6665 bit
+      [phase known:   0.0000 bit]
+      [phase unknown: 0.6667 bit = (2/3)*1 + (1/3)*0]
+    Closed form H1 = −(2/3)log2(2/3) − (1/3)log2(1/3) = 0.9183 bit
+    NOTE: 1.585 bit is the *dinucleotide* entropy H2, not the marginal H1.
+          The original manuscript conflated the two.
+
+[Part 4] Summary — manuscript cross-check (Reviewer 1, P1)
+----------------------------------------------------------------------------------
+  Quantity                                      Value                 Source
+  -------------------------------------- ------------ ----------------------
+  E26A error rate ε(2.5)                       0.1406  Table 2 / Resp. R1-P1
+  E26A_R253A ε(1.0)                            0.3956  Table 2 / Resp. R1-P1
+  Random (A/C-only) ε                          0.5017                Table 2
+  Analytic ε(1.0)                              0.3932            Closed form
+  Analytic ε(3.0)                              0.0904            Closed form
+  E26Q product-level dG                        0.1000   Exp. 10.16% → calib.
+
+==================================================================================
+DONE. All quantities labelled by (model layer, metric).
+==================================================================================
+[Finished in 968ms]
