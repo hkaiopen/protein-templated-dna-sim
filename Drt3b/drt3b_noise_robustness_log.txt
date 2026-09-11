@@ -1,22 +1,53 @@
-=== Drt3b Noise Robustness Experiment ===
-Measuring error rate (non‑alternating adjacent pairs) as a function of noise.
+==================================================================================
+drt3b_noise_robustness.py — Drt3b information-dynamics model
+50 seeds × 500 bp | empirical SEs (Reviewer 1, P1)
+Reproduces manuscript Figure 2
+==================================================================================
 
---- Effect of Temperature (T) ---
-T =  0.1 : mean error rate = 0.0000 ± 0.0000
-T =  0.5 : mean error rate = 0.0000 ± 0.0000
-T =  1.0 : mean error rate = 0.0000 ± 0.0000
-T =  2.0 : mean error rate = 0.0000 ± 0.0000
-T =  5.0 : mean error rate = 0.0000 ± 0.0000
-T = 10.0 : mean error rate = 0.0000 ± 0.0000
+[Wild-type (Δ = 100)]
+    T (kT)           ε (mean ± SE)    ε analytic      |Δε|
+  --------------------------------------------------------------
+      0.10      0.0000 ± 0.0000        0.0000    0.0000
+      0.50      0.0000 ± 0.0000        0.0000    0.0000
+      1.00      0.0000 ± 0.0000        0.0000    0.0000
+      2.00      0.0000 ± 0.0000        0.0000    0.0000
+      4.00      0.0000 ± 0.0000        0.0000    0.0000
+      6.00      0.0000 ± 0.0000        0.0000    0.0000
+      8.00      0.0000 ± 0.0000        0.0000    0.0000
+     10.00      0.0001 ± 0.0001        0.0001    0.0000
 
---- Effect of Concentration Ratio (bias for mismatched nucleotide) ---
-Conc ratio =  0.5 : mean error rate = 0.0000 ± 0.0000
-Conc ratio =  1.0 : mean error rate = 0.0000 ± 0.0000
-Conc ratio =  2.0 : mean error rate = 0.0000 ± 0.0000
-Conc ratio =  5.0 : mean error rate = 0.0000 ± 0.0000
-Conc ratio = 10.0 : mean error rate = 0.0000 ± 0.0000
+[E26A_R253A (Δ = 1.0)]
+    T (kT)           ε (mean ± SE)    ε analytic      |Δε|
+  --------------------------------------------------------------
+      0.10      0.0001 ± 0.0001        0.0001    0.0000
+      0.50      0.2127 ± 0.0028        0.2100    0.0028
+      1.00      0.3956 ± 0.0042        0.3932    0.0024
+      2.00      0.4707 ± 0.0032        0.4700    0.0007
+      4.00      0.4930 ± 0.0030        0.4923    0.0008
+      6.00      0.4972 ± 0.0031        0.4965    0.0007
+      8.00      0.4984 ± 0.0031        0.4981    0.0003
+     10.00      0.4978 ± 0.0031        0.4988    0.0010
 
---- Extreme noise (T=10, conc_ratio=10) ---
-Error rate = 0.4422
-Sequence preview: CCACAACCCCCCACAAACACACCCACACACACAAAACAAACCACCCAAACACACACAACCACACACAACAAAAAACACAC...
-[Finished in 2.8s]
+==================================================================================
+Figure 2 data (for direct plotting):
+==================================================================================
+    T (kT)     ε_WT(Δ=100)     ε_pred(Δ=1.0)
+  --------------------------------------------
+      0.10          0.0000            0.0001
+      0.50          0.0000            0.2100
+      1.00          0.0000            0.3932
+      2.00          0.0000            0.4700
+      4.00          0.0000            0.4923
+      6.00          0.0000            0.4965
+      8.00          0.0000            0.4981
+     10.00          0.0001            0.4988
+
+Interpretation:
+  * Wild-type Δ = 100: error rate remains < 10⁻³ for all T ≤ 10.
+  * Δ = 1 (model prediction): error rate rises with T; at T = 1
+    it equals ε(1) = 0.3932 and at T = 10 it approaches the
+    A/C-only random limit ε → 0.50.
+  * Δ = 100 is a numerical proxy for the hard-exclusion limit;
+    ε < 0.001 for any Δ ≳ 10 at T = 1 (Reviewer 1, P4).
+==================================================================================
+[Finished in 1.5s]
