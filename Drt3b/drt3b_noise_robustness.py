@@ -1,145 +1,167 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-Noise Robustness Experiment for Drt3b
-======================================
-Simulates non‑ideal conditions:
-- Substrate concentration fluctuations (dATP/dCTP ratio)
-- Temperature changes (modulates the energy barrier discrimination)
-- Random mis‑incorporation probability
+drt3b_noise_robustness.py
+=========================
 
-Measures the error rate (fraction of non‑alternating positions) as a function of noise level.
+Noise robustness of the Drt3b information-dynamics model.
+Reproduces manuscript Figure 2: error rate as a function of temperature
+for two representative A/C mismatch barriers (wild-type Δ = 100 kT and
+the predicted double mutant E26A_R253A Δ = 1.0 kT).
+
+Model
+-----
+Two-state automaton S_A ↔ S_C with deterministic alternation and
+Boltzmann nucleotide selection at finite temperature T. The effective
+per-step mismatch probability is
+
+    p_wrong(Δ, T) = e^(−Δ/T) / (1 + e^(−Δ/T)),
+
+giving the exact closed-form error rate for the A/C-only layer
+
+    ε(Δ, T) = 2 e^(−Δ/T) / (1 + e^(−Δ/T))^2.
+
+The Monte Carlo simulation must reproduce this closed form to within
+the empirical standard error.
+
+Aligned with
+------------
+- drt3b_mutation_effects.py    (same constants, same empirical SE)
+- drt3b_dinucleotide_complexity.py (same metric definition)
+- Reviewer 1, Point 1 : empirical SE from 50 independent replicas
+- Reviewer 1, Point 4 : Δ = 100 kT is a numerical proxy for the
+                        hard-exclusion limit; ε < 0.001 for any
+                        Δ ≳ 10 at T = 1.
+- Reviewer 2, Point 3 : terminology "constraint space".
+
+Authors: Kai Huang, Hongkui Liu, Ziwei Huang
+Repository: https://github.com/hkaiopen/protein-templated-dna-sim
 """
 
-import random
 import numpy as np
-from collections import Counter
-from drt3b_deterministic_simulator import Drt3bDeterministicSimulator
 
 
-class NoisyDrt3bSimulator(Drt3bDeterministicSimulator):
+# ------------------------------------------------------------------
+# Shared constants (must match drt3b_mutation_effects.py)
+# ------------------------------------------------------------------
+RNG_SEEDS  = list(range(1000, 1050))   # 50 independent seeds
+SEQ_LENGTH = 500
+
+# Representative barriers for Figure 2
+DELTA_WT       = 100.0   # numerical proxy for the hard-exclusion limit
+DELTA_DOUBLE   = 1.0     # predicted double mutant E26A_R253A
+
+
+# ==================================================================
+# 1. Simulator (A/C-only layer, temperature-scaled Boltzmann)
+# ==================================================================
+
+def simulate_ac_at_T(delta, T, L, rng):
     """
-    Extends the deterministic simulator with tunable noise parameters.
+    A/C-only two-state automaton at temperature T (kT units).
+    Per-step mismatch probability:
+        p_wrong = e^(−Δ/T) / (1 + e^(−Δ/T)).
     """
-
-    def __init__(self, max_length=500, temperature=0.5, concentration_ratio=1.0):
-        """
-        Args:
-            max_length: maximum chain length
-            temperature: controls the softness of the Boltzmann selection.
-                         Higher T -> more random, lower T -> more deterministic.
-            concentration_ratio: relative concentration of the non‑matching
-                                 but still valid nucleotide (e.g., when state=A,
-                                 concentration_ratio multiplies the effective
-                                 "fuel" of dCTP relative to dATP). Here we
-                                 implement it as a bias in the energy.
-        """
-        super().__init__(max_length)
-        self.temperature = temperature
-        self.concentration_ratio = concentration_ratio
-
-    def _energy_barrier(self, nucleotide: str) -> float:
-        """
-        Energy barrier with temperature scaling and concentration bias.
-        For invalid nucleotides (G/T) still infinity.
-        For valid nucleotides:
-            - perfect match: base energy 0.0
-            - other valid: base energy E_mismatch = 100.0 / concentration_ratio
-                           (higher ratio makes mismatch easier)
-        Then the effective energy is E / temperature (Boltzmann factor).
-        """
-        if nucleotide not in self.valid_nucleotides:
-            return float('inf')
-        if nucleotide == self.state:
-            return 0.0 / self.temperature   # still zero, but kept for consistency
-        # Mismatch energy: higher concentration_ratio -> lower barrier
-        base_mismatch = 100.0 / max(self.concentration_ratio, 0.001)
-        return base_mismatch / self.temperature
-
-    def step_stochastic(self) -> bool:
-        """
-        Stochastic step using Boltzmann probabilities instead of deterministic greedy.
-        Probability of selecting a nucleotide is proportional to exp(-E / T)
-        (with T already baked into energies).
-        """
-        nucleotides = ['A', 'C', 'G', 'T']
-        energies = [self._energy_barrier(nt) for nt in nucleotides]
-        # Softmax (Boltzmann)
-        valid = [np.exp(-e) if e < 1e6 else 0.0 for e in energies]
-        if sum(valid) == 0:
-            return False
-        probs = np.array(valid) / sum(valid)
-        chosen = np.random.choice(nucleotides, p=probs)
-        if chosen not in self.valid_nucleotides:
-            return False
-        self.chain.append(chosen)
-        self.state = self.transition[self.state]
-        return True
-
-    def run_stochastic(self):
-        """Run synthesis using stochastic steps."""
-        for _ in range(self.max_length):
-            if not self.step_stochastic():
-                break
-        return ''.join(self.chain)
+    x = delta / T
+    p_wrong = np.exp(-x) / (1.0 + np.exp(-x))
+    state = 'S_A' if rng.random() < 0.5 else 'S_C'
+    seq = []
+    for _ in range(L):
+        if state == 'S_A':
+            seq.append('C' if rng.random() < p_wrong else 'A')
+        else:
+            seq.append('A' if rng.random() < p_wrong else 'C')
+        state = 'S_C' if state == 'S_A' else 'S_A'
+    return ''.join(seq)
 
 
-def compute_error_rate(sequence: str) -> float:
-    """Calculate fraction of positions where a nucleotide repeats (AA or CC)."""
-    if len(sequence) < 2:
+# ==================================================================
+# 2. Metrics and closed form
+# ==================================================================
+
+def error_rate_adjacent(seq):
+    """Fraction of adjacent identical bases (Layer A metric)."""
+    if len(seq) < 2:
         return 0.0
-    errors = 0
-    for i in range(len(sequence)-1):
-        if sequence[i] == sequence[i+1]:
-            errors += 1
-    return errors / (len(sequence)-1)
+    return sum(1 for i in range(len(seq) - 1)
+               if seq[i] == seq[i + 1]) / (len(seq) - 1)
 
 
-def run_noise_experiment():
-    """Test robustness under various noise levels."""
-    print("=== Drt3b Noise Robustness Experiment ===")
-    print("Measuring error rate (non‑alternating adjacent pairs) as a function of noise.\n")
+def closed_form_eps(delta, T):
+    """Exact ε(Δ, T) = 2 e^(−Δ/T) / (1 + e^(−Δ/T))^2."""
+    x = delta / T
+    return 2.0 * np.exp(-x) / (1.0 + np.exp(-x)) ** 2
 
-    # Parameters
-    max_len = 200
-    n_trials = 20
 
-    # Vary temperature (higher = more randomness)
-    temps = [0.1, 0.5, 1.0, 2.0, 5.0, 10.0]
-    # Vary concentration ratio ( >1 makes mismatched nucleotide more available)
-    conc_ratios = [0.5, 1.0, 2.0, 5.0, 10.0]
+# ==================================================================
+# 3. Ensemble runner (empirical SE, Reviewer 1 P1)
+# ==================================================================
 
-    print("--- Effect of Temperature (T) ---")
+def run_ensemble(delta, T):
+    eps = []
+    for s in RNG_SEEDS:
+        seq = simulate_ac_at_T(delta, T, SEQ_LENGTH,
+                               np.random.default_rng(s))
+        eps.append(error_rate_adjacent(seq))
+    eps = np.asarray(eps, dtype=float)
+    mean = float(eps.mean())
+    se   = float(eps.std(ddof=1) / np.sqrt(len(eps)))
+    return mean, se
+
+
+# ==================================================================
+# 4. Main driver — manuscript Figure 2
+# ==================================================================
+
+def main():
+    sep = '=' * 82
+    print(sep)
+    print("drt3b_noise_robustness.py — Drt3b information-dynamics model")
+    print(f"50 seeds × {SEQ_LENGTH} bp | empirical SEs (Reviewer 1, P1)")
+    print("Reproduces manuscript Figure 2")
+    print(sep)
+
+    temps = [0.1, 0.5, 1.0, 2.0, 4.0, 6.0, 8.0, 10.0]
+    cases = [
+        ("Wild-type (Δ = 100)",     DELTA_WT),
+        ("E26A_R253A (Δ = 1.0)",    DELTA_DOUBLE),
+    ]
+
+    for label, delta in cases:
+        print(f"\n[{label}]")
+        print(f"  {'T (kT)':>8}  {'ε (mean ± SE)':>22}  "
+              f"{'ε analytic':>12}  {'|Δε|':>8}")
+        print("  " + "-" * 62)
+        for T in temps:
+            m, se = run_ensemble(delta, T)
+            ana   = closed_form_eps(delta, T)
+            print(f"  {T:>8.2f}  {m:>10.4f} ± {se:>6.4f}  "
+                  f"{ana:>12.4f}  {abs(m - ana):>8.4f}")
+
+    # ------------------------------------------------
+    # Summary for manuscript Figure 2
+    # ------------------------------------------------
+    print()
+    print(sep)
+    print("Figure 2 data (for direct plotting):")
+    print(sep)
+    print(f"  {'T (kT)':>8}  {'ε_WT(Δ=100)':>14}  {'ε_pred(Δ=1.0)':>16}")
+    print("  " + "-" * 44)
     for T in temps:
-        error_rates = []
-        for _ in range(n_trials):
-            sim = NoisyDrt3bSimulator(max_length=max_len, temperature=T, concentration_ratio=1.0)
-            dna = sim.run_stochastic()
-            err = compute_error_rate(dna)
-            error_rates.append(err)
-        mean_err = np.mean(error_rates)
-        std_err = np.std(error_rates)
-        print(f"T = {T:4.1f} : mean error rate = {mean_err:.4f} ± {std_err:.4f}")
+        e_wt  = closed_form_eps(DELTA_WT, T)
+        e_dbl = closed_form_eps(DELTA_DOUBLE, T)
+        print(f"  {T:>8.2f}  {e_wt:>14.4f}  {e_dbl:>16.4f}")
 
-    print("\n--- Effect of Concentration Ratio (bias for mismatched nucleotide) ---")
-    for cr in conc_ratios:
-        error_rates = []
-        for _ in range(n_trials):
-            sim = NoisyDrt3bSimulator(max_length=max_len, temperature=0.5, concentration_ratio=cr)
-            dna = sim.run_stochastic()
-            err = compute_error_rate(dna)
-            error_rates.append(err)
-        mean_err = np.mean(error_rates)
-        std_err = np.std(error_rates)
-        print(f"Conc ratio = {cr:4.1f} : mean error rate = {mean_err:.4f} ± {std_err:.4f}")
-
-    # Additional test: combined extreme noise
-    print("\n--- Extreme noise (T=10, conc_ratio=10) ---")
-    sim = NoisyDrt3bSimulator(max_length=max_len, temperature=10.0, concentration_ratio=10.0)
-    dna = sim.run_stochastic()
-    err = compute_error_rate(dna)
-    print(f"Error rate = {err:.4f}")
-    print(f"Sequence preview: {dna[:80]}...")
+    print()
+    print("Interpretation:")
+    print("  * Wild-type Δ = 100: error rate remains < 10⁻³ for all T ≤ 10.")
+    print("  * Δ = 1 (model prediction): error rate rises with T; at T = 1")
+    print("    it equals ε(1) = 0.3932 and at T = 10 it approaches the")
+    print("    A/C-only random limit ε → 0.50.")
+    print("  * Δ = 100 is a numerical proxy for the hard-exclusion limit;")
+    print("    ε < 0.001 for any Δ ≳ 10 at T = 1 (Reviewer 1, P4).")
+    print(sep)
 
 
 if __name__ == "__main__":
-    run_noise_experiment()
+    main()
