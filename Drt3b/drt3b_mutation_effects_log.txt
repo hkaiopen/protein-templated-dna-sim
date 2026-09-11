@@ -1,28 +1,63 @@
-Drt3b mutation effects simulation
-Data sources: Deng et al., Science 392, 1274 (2026), Figs. 4H, S11A, S11D, S11F
+==============================================================================================
+drt3b_mutation_effects.py — Drt3b information-dynamics model
+50 seeds × 500 bp | empirical SEs (Reviewer 1, P1)
+Data: Deng et al., Science 392, 1274 (2026), Figs. 4H, S11A, S11D, S11F
 Note: R253A has not been experimentally characterized.
+==============================================================================================
 
-Mutation       | Error rate         | dG fraction        | A      | C      | G      | T     
-------------------------------------------------------------------------------------------
-wildtype       | 0.0000 +/- 0.0000 | 0.0000 +/- 0.0000 | 0.500  | 0.500  | 0.000  | 0.000
-E26A           | 0.1012 +/- 0.0197 | 0.0778 +/- 0.0120 | 0.355  | 0.487  | 0.078  | 0.080
-E26Q           | 0.0961 +/- 0.0193 | 0.0800 +/- 0.0117 | 0.352  | 0.490  | 0.080  | 0.078
-R253A          | 0.1408 +/- 0.0207 | 0.0000 +/- 0.0000 | 0.497  | 0.503  | 0.000  | 0.000
-E26A_R253A     | 0.3914 +/- 0.0251 | 0.0000 +/- 0.0000 | 0.504  | 0.496  | 0.000  | 0.000
-random         | 0.2511 +/- 0.0219 | 0.1248 +/- 0.0110 | 0.375  | 0.378  | 0.125  | 0.123
+[Layer (A)] A/C-only sub-model (E = ∞ for G, T)
+            Metric ε = fraction of adjacent identical bases
+            Closed form: ε(Δ) = 2 e^(−Δ) / (1 + e^(−Δ))^2
+----------------------------------------------------------------------------------------------
+Mutation         Δ_AC          ε (mean ± SE)   ε analytic     |Δε|      A      C      G      T
+----------------------------------------------------------------------------------------------
+wildtype       100.00     0.0000 ± 0.0000       0.0000   0.0000  0.500  0.500  0.000  0.000
+E26A             2.50     0.1406 ± 0.0024       0.1402   0.0004  0.500  0.500  0.000  0.000
+E26Q             2.50     0.1406 ± 0.0024       0.1402   0.0004  0.500  0.500  0.000  0.000
+R253A            2.50     0.1406 ± 0.0024       0.1402   0.0004  0.500  0.500  0.000  0.000
+E26A_R253A       1.00     0.3956 ± 0.0042       0.3932   0.0024  0.500  0.500  0.000  0.000
+random(G/T)         —     0.2503 ± 0.0028            —        —  0.249  0.247  0.257  0.247
 
-Representative sequences (first trial, 80 nt):
-wildtype       : ACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACAC
-E26A           : AAACACCCGCACACACACCAACACTCACCCTCCCACACTCTCCCACTCACACACACACGCACACGCACACACACGCACAC
-E26Q           : CCAAAAGCACGCACTCACGCACACACACACCCACTCTCACACACGCACTCACTCACACACACACACTCTAACACGCCCAC
-R253A          : ACACACACACACACACACACACACACCCACACCCACACACACACACCCACACACACACAAACCCACCCACACACACACAC
-E26A_R253A     : ACACAACCCACCACCCACCCACACACCCACAAACAAAACCACACCCAAACACACAAAAACACACACCCACAAACAAAAAA
-random         : CAGCGCTATAACAATATCTATCTCGCGCTAACCACATCACTAAATCTATCACTAACTCTCTCCACACAGATCTCGAGAGC
+[Layer (B)] G/T-extended model — G only in S_A; T excluded
+            Δ_G,A = ln[(1 − p_G)/p_G] = 1.3863 kT  (p_G = 0.20)
+            Metric = product-level dG fraction = 0.5 · p_G
+            NOTE: adjacent-identical ε is identically zero in this layer
+----------------------------------------------------------------------------------------------
+Mutation          Δ_G,A         dG frac ± SE      A      C      G      T
+----------------------------------------------------------------------------------------------
+E26A             1.3863     0.1000 ± 0.0015  0.400  0.500  0.100  0.000
+E26Q             1.3863     0.1000 ± 0.0015  0.400  0.500  0.100  0.000
+----------------------------------------------------------------------------------------------
+  Experimental anchor: E26Q dG fraction ≈ 10.16% (Deng et al., Fig. S11D/S11F).
+  Model reproduces this by construction (calibration, not independent prediction).
+  E26A shares the same per-step Δ_G,A; its lower overall yield is
+  attributed to a processivity defect (Fig. 4H), outside this model's scope.
 
-E26A vs E26Q per-step dG fraction (model prediction):
-  E26A product-level dG  = 0.0810
-  E26Q product-level dG  = 0.0809
-  Both mutants share the same per-step A-state preference (~80% dA).
-  E26A's lower overall yield is attributed to a processivity defect
-  (Fig. 4H), which is outside the scope of this per-step model.
-[Finished in 11.6s]
+==============================================================================================
+Representative sequences (first trial, seed 42, 80 nt)
+==============================================================================================
+
+  Layer (A) — A/C-only sub-model:
+    wildtype       : CACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACA
+    E26A           : CACACACACACACACAAACACACACAAACACACACACACACACACACACAAACACACACACACACACCCACACCCACACA
+    E26Q           : CACACACACACACACAAACACACACAAACACACACACACACACACACACAAACACACACACACACACCCACACCCACACA
+    R253A          : CACACACACACACACAAACACACACAAACACACACACACACACACACACAAACACACACACACACACCCACACCCACACA
+    E26A_R253A     : CACCCACCCACACAAAAACACACAAAACCACACAACCCCACACACACAACAACACACCAACACACACCCCCAACCACACA
+
+  Layer (B) — G/T-extended sub-model:
+    E26A           : CACACACGCACACACGCACACACACACACACACGCACACACACACACACGCACGCGCACACACACACACGCGCACACACA
+    E26Q           : CACACACGCACACACGCACACACACACACACACGCACACACACACACACGCACGCGCACACACACACACGCGCACACACA
+
+==============================================================================================
+Cross-check against the reviewer response letter
+==============================================================================================
+  E26A Layer A ε(2.5)      = 0.1406  (resp. 0.144, closed form 0.1402)
+  E26A_R253A Δ=1.0 ε(1.0)  = 0.3956  (resp. 0.393, closed form 0.3932)
+  Δ=3.0 closed form ε(3.0) = 0.0904  (resp. 0.090)
+  Random (G/T allowed) ε   = 0.2503  (manuscript 0.244)
+  E26Q Layer B dG fraction = 0.1000  (experimental anchor 0.1016)
+
+==============================================================================================
+DONE. Two layers kept separate; no mixed-model numbers.
+==============================================================================================
+[Finished in 2.1s]
