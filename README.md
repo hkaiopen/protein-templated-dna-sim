@@ -105,7 +105,7 @@ model parameter to the experimental value, not an independent prediction.
 | Sequence | H₁ (bit) | H₂ (bit) | H(X₂\|X₁) (bit) |
 |---|---|---|---|
 | WT (strict AC) | 1.0000 | 1.0000 | 0.0000 |
-| E26A (Δ = 2.5) | 0.9996 | 1.5814 | 0.5818 |
+| E26A (Δ = 2.47) | 0.9996 | 1.395 | 0.395 |
 | E26A_R253A (pred.) | 0.9988 | 1.9625 | 0.9637 |
 | Random (A/C-only) | 0.9984 | 1.9956 | 0.9971 |
 | poly(AAC), phase unknown | 0.9185 | 1.5850 | 0.6665 |
