@@ -1,0 +1,8 @@
+G/T-extended Drt3b model (two-state A/G approximation at S_A)
+--------------------------------------------------------------------
+gamma_G (E26Q) = 1.3863 kT
+P(G|S_A)       = 0.2000
+
+E26Q: simulated product-level dG fraction = 0.0950
+E26A: product-level dG fraction = 0.0000  (P(G|S_A) = 0.00)
+[Finished in 187ms]
