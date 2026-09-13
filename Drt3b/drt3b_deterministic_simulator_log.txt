@@ -1,8 +1,9 @@
-=== Deterministic Greedy Drt3b Simulator ===
-Synthesized DNA chain length: 500 bp
-Strictly alternating AC? True
-A fraction: 0.50, C fraction: 0.50
-Preview: ACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACACAC...
-
-OK: strict AC alternation reproduced.
-[Finished in 681ms]
+Deterministic A/C-only Drt3b simulator
+------------------------------------------------------------
+Mutant         Delta     Sim eps    Analytic
+WT            100.00      0.0000      0.0000
+E26A            2.47      0.1805      0.1438
+R253A           2.47      0.1805      0.1438
+E26A_R253A      1.00      0.3860      0.3932
+Random          0.00      0.4837      0.5000
+[Finished in 382ms]
