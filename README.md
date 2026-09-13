@@ -1,196 +1,90 @@
-# Protein-Templated DNA Synthesis — Simulation Code
+# Protein-Templated DNA Synthesis — Information-Dynamics Simulations
 
-**An Information Dynamics Model of Protein-Templated DNA Synthesis: From Qualitative Observations to Quantitative Predictions**
+Simulation code for the manuscript:
 
----
+> Huang, K., Liu, H., Huang, Z. *An Information-Dynamics Model of
+> Protein-Templated DNA Synthesis: From Qualitative Observations to
+> Quantitative Predictions*. 
 
-## Overview
-
-This repository contains the simulation code supporting the manuscript's
-quantitative model of Drt3b protein-templated DNA synthesis. The model
-recasts the Drt3b mechanism within the information-dynamics framework:
-
-- **Constraint space** (formerly called "virtual space") — a two-state
-  automaton {S_A, S_C} with deterministic alternation S_A → S_C → S_A,
-  encoding the geometric constraints of the active pocket.
-- **Real space** — the cellular dNTP pool, with state-dependent matching
-  energies set by the active-site geometry.
-- **Coupling** — a Boltzmann selection rule, P(n | s) ∝ exp(−E(n, s)/kT),
-  where the energy function E(n, s) maps the substrate n to the
-  constraint-space state s via the explicit state→nucleotide map
-  m(S_A) = A, m(S_C) = C.
-
-The framework reproduces wild-type strict alternation, the E26A partial
-fidelity loss, and the E26Q dG misincorporation, and it generates
-testable predictions for mutants not yet experimentally characterized.
-
----
+The model treats the Drt3b active pocket as a deterministic two-state
+automaton in **constraint space**, with nucleotide emission governed by
+a Boltzmann selection rule. All energies are in **kT units (kT = 1)**.
 
 ## Repository structure
 
-```
-protein-templated-dna-sim/
-├── README.md
-└── Drt3b/
-    ├── drt3b_deterministic_simulator.py
-    ├── drt3b_deterministic_simulator_log.txt
-    ├── drt3b_mutation_effects.py
-    ├── drt3b_mutation_effects_log.txt
-    ├── drt3b_dinucleotide_complexity.py
-    ├── drt3b_dinucleotide_complexity_log.txt
-    ├── drt3b_noise_robustness.py
-    └── drt3b_noise_robustness_log.txt
-```
-
-| Script | Purpose |
+| File | Purpose |
 |---|---|
-| `drt3b_deterministic_simulator.py` | Deterministic greedy simulator in the large-barrier limit (Δ → ∞). Reproduces strict AC alternation. |
-| `drt3b_mutation_effects.py` | Two-layer mutation ensemble (A/C-only and G/T-extended) with empirical standard errors over 50 independent seeds. |
-| `drt3b_dinucleotide_complexity.py` | Dinucleotide frequencies, three distinct entropy measures, LZ complexity, and the (AC)₆ ↔ error-rate mapping. |
-| `drt3b_noise_robustness.py` | Temperature robustness scan; regenerates manuscript Figure 2. |
+| `config.py` | Central configuration: energy barriers, seeds, analytical helpers |
+| `drt3b_deterministic_simulator.py` | Single-sequence simulator (fixed seed) |
+| `drt3b_stochastic_simulator.py` | 50-replicate ensemble for mean ± std |
+| `drt3b_gt_extension.py` | G/T-extended model (E26Q, two-state A/G approximation) |
+| `drt3b_dinucleotide_complexity.py` | Analytical entropy metrics |
+| `drt3b_delta_scan.py` | Reproduces Fig. 2 and Table 2 of the manuscript |
+| `drt3b_noise_robustness.py` | Temperature scan (fixed Δ, kT units) |
 
----
+## Key parameter values
 
-## Model layers
-
-Two model layers are reported **separately**, each with its own metric.
-Every output table labels the layer and metric explicitly.
-
-### Layer (A) — A/C-only sub-model
-
-- G and T excluded (E = ∞).
-- Per-step mismatch probability: `p = e^(−Δ) / (1 + e^(−Δ))`.
-- **Metric**: ε = fraction of adjacent identical bases.
-- **Closed form**: `ε(Δ) = 2 e^(−Δ) / (1 + e^(−Δ))²`.
-
-### Layer (B) — G/T-extended sub-model
-
-- G allowed only in the S_A state; T excluded everywhere.
-- `Δ_G,A` calibrated by Boltzmann inversion of the E26Q product-level
-  dG fraction (10.16%): `Δ_G,A = ln[(1 − p_G)/p_G] ≈ 1.386 kT`
-  with `p_G = 0.20`.
-- **Metric**: product-level dG fraction = 0.5 × p_G.
-- The adjacent-identical metric ε is identically zero in this layer
-  (the S_A and S_C emission alphabets are disjoint).
-
----
-
-## Key results
-
-### Mutation effects (Layer A — A/C-only)
-
-| Mutant | Δ (kT) | ε (mean ± SE) | ε analytic |
-|---|---|---|---|
-| Wild-type | 100 | 0.0000 ± 0.0000 | 0.0000 |
-| E26A | 2.5 | 0.1406 ± 0.0024 | 0.1402 |
-| E26Q | 2.5 | 0.1406 ± 0.0024 | 0.1402 |
-| R253A (pred.) | 2.5 | 0.1406 ± 0.0024 | 0.1402 |
-| E26A_R253A (pred.) | 1.0 | 0.3956 ± 0.0042 | 0.3932 |
-| Random (A/C-only) | 0.0 | 0.5017 ± 0.0035 | 0.5000 |
-| Random (G/T allowed) | — | 0.2503 ± 0.0028 | — |
-
-### Mutation effects (Layer B — G/T-extended)
-
-| Mutant | Δ_G,A (kT) | dG fraction (mean ± SE) |
+| Parameter | Value | Basis |
 |---|---|---|
-| E26A | 1.386 | 0.1000 ± 0.0015 |
-| E26Q | 1.386 | 0.1000 ± 0.0015 |
+| `DELTA_E26A` | 2.47 kT | Calibrated from experimental ε = 0.144 |
+| `DELTA_R253A` | 2.47 kT | Symmetry with E26A (model prediction) |
+| `DELTA_DOUBLE` | 1.0 kT | Working assumption for both-barrier-loss |
+| `DELTA_RANDOM` | 0.0 kT | Thermodynamic limit |
+| `P_G_AT_A_STATE_E26Q` | 0.20 | From structural data (≈80/20 dA/dG) |
+| `GAMMA_G_E26Q` | ≈1.386 kT | `ln(4)`, Boltzmann barrier |
 
-Experimental anchor: E26Q product-level dG fraction = 10.16%
-(Deng et al. 2026, Fig. S11D/S11F). This is a **calibration** of the
-model parameter to the experimental value, not an independent prediction.
+## Entropy metrics (analytical)
 
-### Entropy measures (three distinct quantities)
+All entropy values are **analytical**, computed from the merged-phase
+dinucleotide distribution `P(AA) = P(CC) = ε/2` and
+`P(AC) = P(CA) = (1-ε)/2`, giving `H₂ = 1 + h₂(ε)` and
+`H(X₂|X₁) = h₂(ε)`. Finite-sample simulations would give
+`H₁ = 0.9996 ± 0.0004`, consistent with the analytical value `H₁ = 1.000`.
 
-| Sequence | H₁ (bit) | H₂ (bit) | H(X₂\|X₁) (bit) |
-|---|---|---|---|
-| WT (strict AC) | 1.0000 | 1.0000 | 0.0000 |
-| E26A (Δ = 2.47) | 0.9996 | 1.395 | 0.395 |
-| E26A_R253A (pred.) | 0.9988 | 1.9625 | 0.9637 |
-| Random (A/C-only) | 0.9984 | 1.9956 | 0.9971 |
-| poly(AAC), phase unknown | 0.9185 | 1.5850 | 0.6665 |
+| Mutant | Δ (kT) | H₁ (bit) | H₂ (bit) | H(X₂\|X₁) (bit) |
+|---|---:|---:|---:|---:|
+| Wild-type | → ∞ | 1.000 | 1.000 | 0.000 |
+| E26A (calibrated) | 2.47 | 1.000 | 1.594 | 0.594 |
+| R253A (prediction) | 2.47 | 1.000 | 1.594 | 0.594 |
+| E26A_R253A (prediction) | 1.0 | 1.000 | 1.967 | 0.967 |
+| Random (4-base) | 0.0 | 2.000 | 4.000 | 2.000 |
 
-For a deterministic poly(AAC) repeat: H₁ = 0.918 bit,
-H₂ = log₂ 3 = 1.585 bit, H(X₂\|X₁) = 0.667 bit (phase unknown) or
-0 bit (phase known). The value 1.58 bit is the **dinucleotide** entropy
-H₂, not the marginal entropy H₁.
+## Notes on model layers
 
-### Temperature robustness (manuscript Figure 2)
+- **A/C-only model:** G and T have `E = ∞`; the error rate is the
+  fraction of adjacent identical A/C bases; the closed form is
+  `ε(Δ) = 2·exp(-Δ)/(1+exp(-Δ))²`.
+- **G/T-extended model:** at the A-selecting state, only A and G
+  compete under the two-state approximation described in the
+  manuscript (§3.2). This approximation is valid when the A/C
+  discrimination barrier at `S_A` is large compared to `γ_G`.
+- **`drt3b_noise_robustness.py`:** plots ε versus T at fixed Δ (kT
+  units). This is *not* the same as Fig. 2 of the manuscript; Fig. 2
+  is generated by `drt3b_delta_scan.py`.
 
-| T (kT) | ε(Δ=100) | ε(Δ=1.0) |
-|---|---|---|
-| 0.1 | 0.0000 | 0.0001 |
-| 0.5 | 0.0000 | 0.2100 |
-| 1.0 | 0.0000 | 0.3932 |
-| 2.0 | 0.0000 | 0.4700 |
-| 4.0 | 0.0000 | 0.4923 |
-| 6.0 | 0.0000 | 0.4965 |
-| 8.0 | 0.0000 | 0.4981 |
-| 10.0 | 0.0001 | 0.4988 |
-
-The wild-type conclusion (ε ≈ 0) is unchanged for any Δ ≳ 10.
-Δ = 100 kT is retained only as a numerically safe surrogate for the
-hard-exclusion limit (Δ → ∞).
-
----
-
-## How to run
+## Reproducing the tables
 
 ```bash
-cd Drt3b
-
-python3 drt3b_deterministic_simulator.py
-python3 drt3b_mutation_effects.py
-python3 drt3b_dinucleotide_complexity.py
-python3 drt3b_noise_robustness.py
+python drt3b_stochastic_simulator.py       # Table 1 (mean ± std)
+python drt3b_delta_scan.py                 # Table 2 / Fig. 2
+python drt3b_gt_extension.py               # Table 3 (G/T extension)
+python drt3b_dinucleotide_complexity.py    # Table 4 (entropy)
 ```
 
-**Requirements**: Python 3.11+, `numpy`.
+Ensemble statistics use 50 independent seeds (`1000`–`1049`); the
+single-sequence demonstration script uses a fixed seed of `42`.
 
-All scripts use 50 independent random seeds (1000–1049) for ensemble
-statistics, with a fixed seed (42) reserved for single-run
-demonstration. All reported values are reproducible from the
-provided code.
+## Predictions not implemented in code
 
----
+Predictions A (single-state automaton), C (asymmetric barriers), and E
+(R253A as open prediction) are derived analytically in the manuscript
+and can be evaluated in closed form; they are not part of this
+simulation suite.
 
-## Data sources
+## Data and code availability
 
-Experimental anchors used for calibration:
-
-- Deng, P., Lee, H., Armijo, C., Wang, H., Gao, A. (2026).
-  Protein-templated synthesis of dinucleotide repeat DNA by an
-  antiphage reverse transcriptase. *Science* **392**, 1274–1281.
-  Figs. 4H, S11A, S11D, S11F.
-- Kiran, S. (2026). A substrate recursion principle for biological
-  information, with empirical anchoring through a templating-mode
-  taxonomy. Preprint (June 2026).
-
-**Note on R253A**: this mutant has not been experimentally
-characterized; the original study did not purify the R253A mutant
-protein. R253A parameters in this code are a **model prediction**
-based on the structural symmetry between Glu26 (A-state gate) and
-Arg253 (C-state gate), and remain to be tested.
-
----
-
-## Terminology
-
-- **Constraint space** — the abstract space of geometric and chemical
-  constraints imposed by the Drt3b active pocket (the two-state
-  automaton {S_A, S_C}). Corresponds to the "virtual space" of the
-  broader information-dynamics framework.
-- **Real space** — the physical space of the dNTP pool.
-- **State s ∈ {S_A, S_C}** — a conformational variable of the active
-  pocket.
-- **Nucleotide n ∈ {A, C, G, T}** — the substrate.
-- **m(·)** — the state→nucleotide map m(S_A) = A, m(S_C) = C.
-
----
-
-## Repository
-
-<https://github.com/hkaiopen/protein-templated-dna-sim>
+All scripts are released under the MIT License. Raw CSV tables from
+the ensemble runs can be regenerated with `drt3b_stochastic_simulator.py`.
 
 ## License
 
