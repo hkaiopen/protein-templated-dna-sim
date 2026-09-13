@@ -1,0 +1,16 @@
+Analytical epsilon(Delta) at T = 1 (G/T excluded)
+------------------------------------------------------------
+   Delta    eps(Delta)
+    0.10        0.4988
+    0.50        0.4700
+    1.00        0.3932
+    1.50        0.2983
+    2.00        0.2100
+    2.50        0.1402
+    3.00        0.0904
+    5.00        0.0133
+   10.00        0.0001
+
+Fidelity threshold: eps = 0.05 at Delta = 3.637 kT
+Prediction D: 'faithful' regime begins at Delta >~ 3.7 kT.
+[Finished in 2.3s]
