@@ -1,10 +1,10 @@
 """
-Exact (deterministic) simulator for the A/C-only Drt3b model.
+Two-state Drt3b simulator: deterministic state transitions
+(S_A -> S_C -> S_A) with stochastic Boltzmann emission.
 
-The state alternates deterministically S_A -> S_C -> S_A. At each step,
-the emitted nucleotide is selected to be the state-preferred one when
-the drawn uniform is below the Boltzmann-corrected threshold, otherwise
-the other A/C nucleotide.
+The preferred nucleotide at each state is emitted with probability
+q = 1/(1+exp(-Delta)); the alternative A/C nucleotide is emitted with
+probability 1 - q.
 """
 
 import random
