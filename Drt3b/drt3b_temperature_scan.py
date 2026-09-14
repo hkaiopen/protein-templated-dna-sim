@@ -1,13 +1,10 @@
 """
-Error rate as a function of temperature at fixed Delta (kT units).
+Temperature scan at fixed Delta (kT units).
 
-Note on interpretation: with energies expressed in kT units, varying T
-while holding Delta fixed does not change the Boltzmann factor
-exp(-E/kT). The temperature scan is therefore provided as a numerical
-check that the implementation is well-behaved; it is NOT the same as
-Fig. 2 of the manuscript, which plots eps vs. Delta at T = 1.
-
-For the manuscript's Fig. 2, see drt3b_delta_scan.py.
+Note: in kT units the Boltzmann factor exp(-E/kT) is invariant under
+rescaling T while holding Delta fixed. This script is therefore a
+numerical sanity check, not the epsilon-Delta curve of Figure 2.
+For Figure 2, use drt3b_delta_scan.py.
 """
 
 from config import epsilon_from_delta, DELTA_E26A, DELTA_DOUBLE
