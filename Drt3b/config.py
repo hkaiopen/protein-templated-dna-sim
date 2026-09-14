@@ -1,10 +1,15 @@
 """
 Central configuration for the Drt3b information-dynamics simulations.
 
-All energy values are in kT units (kT = 1). The A/C-only model has a
-deterministic two-state automaton with Boltzmann-distributed emissions.
-The G/T-extended model uses the two-state (A/G) approximation at the
-A-selecting state, as described in the manuscript.
+The model has a **deterministic state transition** (S_A -> S_C -> S_A)
+and **stochastic nucleotide emission** governed by a Boltzmann rule:
+at each step the state-preferred nucleotide is emitted with probability
+q = 1/(1+exp(-Delta)), and the alternative A/C nucleotide otherwise.
+The state chain is therefore periodic with period 2 and admits a unique
+stationary occupation distribution pi_A = pi_C = 1/2 (not a static
+fixed point).
+
+All energy values are in kT units (kT = 1).
 """
 
 # ---------------------------------------------------------------
