@@ -1,11 +1,10 @@
 """
-G/T-extended Drt3b model for the E26Q mutant.
+G/T-extended Drt3b model — applies to **E26Q only**.
 
-At the A-selecting state the model uses the two-state (A/G) approximation
-stated in the manuscript (Sec. 3.2): only A and G compete. At the
-C-selecting state, C is emitted with probability q (unchanged A/C layer).
-
-The product-level dG fraction is f_G = 0.5 * P(G | S_A).
+At the A-selecting state, A and G compete under the two-state
+approximation stated in the manuscript (Sec. 3.2). The E26A mutant
+does **not** enter this layer: the Gly248 steric gate still excludes
+G and T, so P(G | S_A) = 0 for E26A.
 """
 
 from config import (
