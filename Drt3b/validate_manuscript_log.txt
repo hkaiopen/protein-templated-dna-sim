@@ -1,0 +1,19 @@
+Validating manuscript numerical claims
+==============================================================
+[PASS] WT epsilon (hard-exclusion)                got=0.0000  exp=0.0000
+[PASS] E26A epsilon (calibrated)                  got=0.1438  exp=0.1440
+[PASS] R253A epsilon (symmetry)                   got=0.1438  exp=0.1440
+[PASS] E26A_R253A epsilon (Delta=1.0)             got=0.3932  exp=0.3930
+[PASS] Random (4-base) epsilon                    got=0.2500  exp=0.2500
+[PASS] E26Q gamma_G (kT)                          got=1.3863  exp=1.3860
+[PASS] E26Q P(G|S_A)                              got=0.2000  exp=0.2000
+[PASS] E26Q product-level dG fraction             got=0.1000  exp=0.1000
+[PASS] E26A P(G|S_A)                              got=0.0000  exp=0.0000
+[PASS] E26A H2 (bit)                              got=1.5941  exp=1.5940
+[PASS] E26A H(X2|X1) (bit)                        got=0.5941  exp=0.5940
+[PASS] Double-mutant H2 (bit)                     got=1.9668  exp=1.9670
+[PASS] Double-mutant H(X2|X1) (bit)               got=0.9668  exp=0.9670
+[PASS] Prediction D threshold Delta (kT)          got=3.6369  exp=3.6370
+==============================================================
+ALL MANUSCRIPT VALUES VERIFIED
+[Finished in 334ms]
